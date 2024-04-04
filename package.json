@@ -1,0 +1,17 @@
+{
+	"name": "smoedoe-quotes",
+	"version": "1.0.0",
+	"description": "",
+	"main": "quotes.js",
+	"type": "module",
+	"scripts": {
+		"start": "node quotes.js"
+	},
+	"author": "Rens van der Kemp",
+	"license": "ISC",
+	"dependencies": {
+		"axios": "^1.6.8",
+		"canvas": "^2.11.2",
+		"dotenv": "^16.4.5"
+	}
+}
