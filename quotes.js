@@ -1,6 +1,7 @@
 import "dotenv/config";
 import axios from "axios";
 import FormData from "form-data";
+import cron from "node-cron";
 import * as fs from "fs";
 import { createCanvas, loadImage } from "canvas";
 
@@ -196,6 +197,16 @@ function appendNameAndDate(
 	ctx.fillText(authorDateText, x, y);
 }
 
+function getCurrentDate() {
+	const currentDate = new Date();
+	const day = String(currentDate.getDate()).padStart(2, "0");
+	const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+	const year = currentDate.getFullYear();
+
+	const formattedDate = `${day}-${month}-${year}`;
+	return formattedDate;
+}
+
 async function sendQuote() {
 	try {
 		const canvas = await generateImageWithQuote();
@@ -228,11 +239,13 @@ async function sendQuote() {
 			headers: data.getHeaders(),
 		};
 
-		const response = await axios.request(config);
-		console.log(JSON.stringify(response.data));
+		await axios.request(config);
+		console.log(`Send quote of the day (${getCurrentDate()})`);
 	} catch (error) {
 		console.error("Error sending quote", error);
 	}
 }
 
-sendQuote();
+cron.schedule("0 20 * * *", () => {
+	sendQuote();
+});
