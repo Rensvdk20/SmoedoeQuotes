@@ -1,7 +1,6 @@
 import "dotenv/config";
 import axios from "axios";
 import FormData from "form-data";
-import cron from "node-cron";
 import * as fs from "fs";
 import { createCanvas, loadImage } from "canvas";
 
@@ -246,6 +245,4 @@ async function sendQuote() {
 	}
 }
 
-cron.schedule("0 20 * * *", () => {
-	sendQuote();
-});
+sendQuote();
