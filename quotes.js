@@ -91,16 +91,18 @@ async function generateImageWithQuote() {
 	const { name, quote, date } = quoteData;
 
 	//Check if quote is already used in the past 14 days
-	const isQuoteExists = await QuotesModel.exists({ text: quote });
+	const isQuoteExists = await QuotesModel.exists({
+		text: quote,
+		date: { $gt: new Date(Date.now() - 12096e5) }, // 12096e5 milliseconds = 14 days
+	});
 
 	if (isQuoteExists) {
-		console.log("Already exists");
-		console.log(quote);
-		return sendQuote();
+		console.debug("Already exists: " + quote);
+		return false;
 	} else {
-		console.log("Doesn't exist yet");
+		console.debug("Doesn't exist yet: " + quote);
 		const qm = new QuotesModel({
-			quote,
+			text: quote,
 			name,
 		});
 
@@ -239,6 +241,10 @@ function getCurrentDate() {
 async function sendQuote() {
 	try {
 		const canvas = await generateImageWithQuote();
+
+		//If the quote is already used in the past 14 days, pick another
+		if (!canvas) return sendQuote();
+
 		const out = fs.createWriteStream("./quote.jpeg");
 		const stream = canvas.createJPEGStream();
 		stream.pipe(out);
@@ -268,13 +274,13 @@ async function sendQuote() {
 			headers: data.getHeaders(),
 		};
 
-		//? await axios.request(config);
-		console.log(`Send quote of the day (${getCurrentDate()})`);
+		await axios.request(config);
+		console.log(`-----Send quote of the day (${getCurrentDate()})-----`);
 	} catch (error) {
 		console.error("Error sending quote", error);
 	}
 }
 
-//? cron.schedule("0 20 * * *", () => {
-sendQuote();
-//? });
+cron.schedule("0 20 * * *", () => {
+	sendQuote();
+});
