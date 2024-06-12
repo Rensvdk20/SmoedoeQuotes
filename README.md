@@ -44,5 +44,5 @@ To run the code in this repository, you need to have the following:
 - Run the bot:
 
     ```bash
-    node index.js
+    node quotes.js
     ```
