@@ -1,9 +1,21 @@
 import "dotenv/config";
 import axios from "axios";
+import mongoose from "mongoose";
 import FormData from "form-data";
 import cron from "node-cron";
 import * as fs from "fs";
 import { createCanvas, loadImage } from "canvas";
+
+const Schema = mongoose.Schema;
+const Quote = new Schema({
+	text: { type: String },
+	name: { type: String },
+	date: { type: Date, default: Date.now },
+});
+
+const conn = await mongoose.connect(process.env.MONGODB_CONNECTION_STRING);
+
+const QuotesModel = conn.model("Quote", Quote);
 
 // Parse quote and extract the date
 function parseQuote(quote) {
@@ -77,6 +89,25 @@ async function generateImageWithQuote() {
 	}
 
 	const { name, quote, date } = quoteData;
+
+	//Check if quote is already used in the past 14 days
+	const isQuoteExists = await QuotesModel.exists({
+		text: quote,
+		date: { $gt: new Date(Date.now() - 12096e5) }, // 12096e5 milliseconds = 14 days
+	});
+
+	if (isQuoteExists) {
+		console.debug("Already exists: " + quote);
+		return false;
+	} else {
+		console.debug("Doesn't exist yet: " + quote);
+		const qm = new QuotesModel({
+			text: quote,
+			name,
+		});
+
+		await qm.save(); // Save the new quote
+	}
 
 	// Set up the canvas with the background image
 	ctx.drawImage(await loadImage("https://picsum.photos/600/400"), 0, 0);
@@ -210,6 +241,10 @@ function getCurrentDate() {
 async function sendQuote() {
 	try {
 		const canvas = await generateImageWithQuote();
+
+		//If the quote is already used in the past 14 days, pick another
+		if (!canvas) return sendQuote();
+
 		const out = fs.createWriteStream("./quote.jpeg");
 		const stream = canvas.createJPEGStream();
 		stream.pipe(out);
@@ -240,12 +275,18 @@ async function sendQuote() {
 		};
 
 		await axios.request(config);
-		console.log(`Send quote of the day (${getCurrentDate()})`);
+		console.log(`-----Send quote of the day (${getCurrentDate()})-----`);
 	} catch (error) {
 		console.error("Error sending quote", error);
 	}
 }
 
 cron.schedule("0 20 * * *", () => {
-	sendQuote();
+	const delay = Math.floor(Math.random() * 26000) + 5000;
+    
+    setTimeout(() => {
+		sendQuote();
+    }, delay);
 });
+
+console.log("Started...");
