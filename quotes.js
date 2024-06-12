@@ -282,5 +282,11 @@ async function sendQuote() {
 }
 
 cron.schedule("0 20 * * *", () => {
-	sendQuote();
+	const delay = Math.floor(Math.random() * 26000) + 5000;
+    
+    setTimeout(() => {
+		sendQuote();
+    }, delay);
 });
+
+console.log("Started...");
