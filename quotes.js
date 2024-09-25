@@ -90,6 +90,12 @@ async function generateImageWithQuote() {
 
 	const { name, quote, date } = quoteData;
 
+	//Check if quote is not empty 
+	if(quote.length === 0) {
+		console.debug("Quote is empty");
+		return false;
+	}
+
 	//Check if quote is already used in the past 14 days
 	const isQuoteExists = await QuotesModel.exists({
 		text: quote,
